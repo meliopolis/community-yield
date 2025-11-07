@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+/* Custom animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+/* Custom component styles */
+@layer components {
+  .card {
+    @apply bg-white rounded-xl shadow-lg border border-gray-100 transition-all duration-300;
+  }
+  
+  .card:hover {
+    @apply shadow-xl -translate-y-1;
+  }
+  
+  .card-gradient {
+    @apply bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border border-gray-100;
+  }
+  
+  .btn-primary {
+    @apply bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-3 px-6 rounded-lg transform transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-indigo-300;
+  }
+  
+  .btn-primary:hover {
+    @apply from-indigo-700 to-purple-700 scale-105 shadow-lg;
+  }
+  
+  .btn-secondary {
+    @apply border border-gray-300 bg-white text-gray-700 font-medium py-2 px-4 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300;
+  }
+  
+  .btn-secondary:hover {
+    @apply bg-gray-50 border-gray-400 shadow-md;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg transition-all duration-200 bg-white;
+  }
+  
+  .input-field:focus {
+    @apply ring-2 ring-indigo-500 border-indigo-500;
+  }
+  
+  .stat-card {
+    @apply bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-6 border border-gray-200 transition-all duration-300;
+  }
+  
+  .stat-card:hover {
+    @apply shadow-md;
+  }
+  
+  .position-card {
+    @apply border border-gray-200 rounded-xl p-6 transition-all duration-300 bg-gradient-to-br from-white to-gray-50;
+  }
+  
+  .position-card:hover {
+    @apply border-indigo-300 shadow-md;
+  }
+  
+  .success-alert {
+    @apply bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 text-green-800 px-6 py-4 rounded-xl flex items-center space-x-3;
+  }
+  
+  .fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+  }
+  
+  .loading-shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200px 100%;
+    animation: shimmer 1.5s infinite;
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Custom gradient backgrounds */
+.gradient-bg {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
