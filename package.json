@@ -1,2 +1,17 @@
 {
+  "name": "community-yield",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Community Yield - DeFi yield redirection platform",
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "cd frontend && bun run dev",
+    "build": "cd frontend && bun run build",
+    "preview": "cd frontend && bun run preview"
+  },
+  "engines": {
+    "node": ">=18"
+  }
 }
