@@ -72,7 +72,7 @@ export function VaultInfo({ vault, currentChainId }: VaultInfoProps) {
             estimatedAPY
           }
         </div>
-        {totalAssets && (
+        {totalAssets !== undefined && totalAssets > 0n && (
           <div className="col-span-2">
             <span className="font-medium">Total Assets:</span> {
               Number(formatEther(totalAssets)).toLocaleString()
