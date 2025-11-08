@@ -1,18 +1,12 @@
-// Chain-specific contract addresses
+// Chain-specific contract addresses - Base only
 export const YIELD_REDIRECTOR_ADDRESSES = {
-  [1]: '0x0000000000000000000000000000000000000000', // Ethereum Mainnet
   [8453]: '0xfd6847c1340423eB0E4D598b02F45fd1F56eF48B', // Base Mainnet  
-  [11155111]: '0x0000000000000000000000000000000000000000', // Sepolia Testnet
   [84532]: '0x0000000000000000000000000000000000000000', // Base Sepolia
 } as const;
 
-export const YIELD_REDIRECTOR_ADDRESS = '0x0000000000000000000000000000000000000000';
-
-// WETH contract addresses for different chains
+// WETH contract addresses for Base chains
 export const WETH_ADDRESSES = {
-  [1]: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // Ethereum Mainnet
   [8453]: '0x4200000000000000000000000000000000000006', // Base Mainnet
-  [11155111]: '0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14', // Sepolia Testnet
   [84532]: '0x4200000000000000000000000000000000000006', // Base Sepolia
 } as const;
 
