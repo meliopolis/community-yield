@@ -1,7 +1,8 @@
 import { useAccount, useReadContract, useChainId, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { formatEther, parseEther } from 'viem';
+import { formatEther, parseEther, encodeFunctionData } from 'viem';
 import { YIELD_REDIRECTOR_ADDRESSES, YIELD_REDIRECTOR_ABI } from '../config/contracts';
 import { AVAILABLE_VAULTS } from '../config/vaults';
+import { simulate, getSimulationURL } from '../config/tenderly';
 import { useState } from 'react';
 
 interface Position {
@@ -24,6 +25,9 @@ export default function PositionsList() {
   const [updatingBeneficiary, setUpdatingBeneficiary] = useState<string | null>(null);
   const [showUpdateModal, setShowUpdateModal] = useState<string | null>(null);
   const [newBeneficiaryAddress, setNewBeneficiaryAddress] = useState('');
+  const [simulatingWithdraw, setSimulatingWithdraw] = useState<string | null>(null);
+  const [simulatingClaimYield, setSimulatingClaimYield] = useState<string | null>(null);
+  const [simulatingUpdateBeneficiary, setSimulatingUpdateBeneficiary] = useState<string | null>(null);
   
   // Get chain-specific contract address
   const contractAddress = YIELD_REDIRECTOR_ADDRESSES[chainId as keyof typeof YIELD_REDIRECTOR_ADDRESSES];
@@ -103,7 +107,7 @@ export default function PositionsList() {
           depositedAmount: formatEther(depositedAssets[i]),
           currentValue: formatEther(currentValues[i]),
           accruedYield: formatEther(accruedYields[i]),
-          beneficiary: address || '', // Current user is the beneficiary
+          beneficiary: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : '', // Current user is the beneficiary
           isDepositor: false
         });
       }
@@ -125,7 +129,7 @@ export default function PositionsList() {
         address: contractAddress as `0x${string}`,
         abi: YIELD_REDIRECTOR_ABI,
         functionName: 'withdraw',
-        args: [position.vaultAddress as `0x${string}`, parseEther(position.depositedAmount)],
+        args: [position.positionId as `0x${string}`, parseEther(position.depositedAmount)],
       });
     } catch (error) {
       console.error('Withdraw error:', error);
@@ -143,7 +147,7 @@ export default function PositionsList() {
         address: contractAddress as `0x${string}`,
         abi: YIELD_REDIRECTOR_ABI,
         functionName: 'claimYield',
-        args: [address as `0x${string}`, position.vaultAddress as `0x${string}`],
+        args: [position.positionId as `0x${string}`],
       });
     } catch (error) {
       console.error('Claim yield error:', error);
@@ -165,7 +169,7 @@ export default function PositionsList() {
         address: contractAddress as `0x${string}`,
         abi: YIELD_REDIRECTOR_ABI,
         functionName: 'updateBeneficiary',
-        args: [position.vaultAddress as `0x${string}`, newBeneficiaryAddress as `0x${string}`],
+        args: [position.positionId as `0x${string}`, newBeneficiaryAddress as `0x${string}`],
       });
     } catch (error) {
       console.error('Update beneficiary error:', error);
@@ -181,6 +185,115 @@ export default function PositionsList() {
   const closeUpdateModal = () => {
     setShowUpdateModal(null);
     setNewBeneficiaryAddress('');
+  };
+
+  const simulateWithdraw = async (position: Position) => {
+    if (!contractAddress || !position.vaultAddress || !position.depositedAmount || !address) return;
+    
+    try {
+      setSimulatingWithdraw(position.positionId);
+      console.log('Simulating withdraw for position:', {
+        vault: position.vaultAddress,
+        amount: position.depositedAmount,
+        positionId: position.positionId
+      });
+
+      const data = encodeFunctionData({
+        abi: YIELD_REDIRECTOR_ABI,
+        functionName: 'withdraw',
+        args: [position.positionId as `0x${string}`, parseEther(position.depositedAmount)],
+      });
+
+      const result = await simulate(chainId, {
+        from: address,
+        to: contractAddress,
+        data,
+      });
+
+      if (result.data?.simulation?.id) {
+        const simulationUrl = getSimulationURL(result.data.simulation.id);
+        window.open(simulationUrl, '_blank');
+      } else {
+        console.error('Simulation failed:', result.error);
+        alert('Simulation failed. Check console for details.');
+      }
+    } catch (error) {
+      console.error('Withdraw simulation error:', error);
+      alert('Simulation failed. Check console for details.');
+    } finally {
+      setSimulatingWithdraw(null);
+    }
+  };
+
+  const simulateClaimYield = async (position: Position) => {
+    if (!contractAddress || !position.vaultAddress || !address) return;
+    
+    try {
+      setSimulatingClaimYield(position.positionId);
+      console.log('Simulating claim yield for position:', position.positionId);
+
+      const data = encodeFunctionData({
+        abi: YIELD_REDIRECTOR_ABI,
+        functionName: 'claimYield',
+        args: [position.positionId as `0x${string}`],
+      });
+
+      const result = await simulate(chainId, {
+        from: address,
+        to: contractAddress,
+        data,
+      });
+
+      if (result.data?.simulation?.id) {
+        const simulationUrl = getSimulationURL(result.data.simulation.id);
+        window.open(simulationUrl, '_blank');
+      } else {
+        console.error('Simulation failed:', result.error);
+        alert('Simulation failed. Check console for details.');
+      }
+    } catch (error) {
+      console.error('Claim yield simulation error:', error);
+      alert('Simulation failed. Check console for details.');
+    } finally {
+      setSimulatingClaimYield(null);
+    }
+  };
+
+  const simulateUpdateBeneficiary = async (position: Position, newAddress: string) => {
+    if (!contractAddress || !newAddress || !address) return;
+    
+    try {
+      setSimulatingUpdateBeneficiary(position.positionId);
+      console.log('Simulating update beneficiary for position:', {
+        positionId: position.positionId,
+        newBeneficiary: newAddress
+      });
+
+      const data = encodeFunctionData({
+        abi: YIELD_REDIRECTOR_ABI,
+        functionName: 'updateBeneficiary',
+        args: [position.positionId as `0x${string}`, newAddress as `0x${string}`],
+      });
+
+      const result = await simulate(chainId, {
+        from: address,
+        to: contractAddress,
+        data,
+      });
+
+      if (result.data?.simulation?.id) {
+        const simulationUrl = getSimulationURL(result.data.simulation.id);
+        window.open(simulationUrl, '_blank');
+      } else {
+        console.error('Simulation failed:', result.error);
+        alert('Simulation failed. Check console for details.');
+      }
+    } catch (error) {
+      console.error('Update beneficiary simulation error:', error);
+      alert('Simulation failed. Check console for details.');
+    } finally {
+      setSimulatingUpdateBeneficiary(null);
+    }
   };
 
   // Reset states when transaction completes
@@ -277,30 +390,49 @@ export default function PositionsList() {
             
             <div className="flex gap-3">
               {!position.isDepositor && (
-                <button 
-                  onClick={() => handleClaimYield(position)}
-                  disabled={isPending || isConfirming}
-                  className="flex-1 btn-primary py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <span className="flex items-center justify-center space-x-2">
-                    {isPending || isConfirming ? (
-                      <>
-                        <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span>{isPending ? 'Confirming...' : 'Processing...'}</span>
-                      </>
+                <>
+                  <button 
+                    onClick={() => handleClaimYield(position)}
+                    disabled={isPending || isConfirming}
+                    className="flex-1 btn-primary py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span className="flex items-center justify-center space-x-2">
+                      {isPending || isConfirming ? (
+                        <>
+                          <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <span>{isPending ? 'Confirming...' : 'Processing...'}</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                          </svg>
+                          <span>Claim Yield</span>
+                        </>
+                      )}
+                    </span>
+                  </button>
+                  <button 
+                    onClick={() => simulateClaimYield(position)}
+                    disabled={simulatingClaimYield === position.positionId}
+                    className="px-3 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    title="Simulate Claim Yield on Tenderly"
+                  >
+                    {simulatingClaimYield === position.positionId ? (
+                      <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
                     ) : (
-                      <>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                        </svg>
-                        <span>Claim Yield</span>
-                      </>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
                     )}
-                  </span>
-                </button>
+                  </button>
+                </>
               )}
               {position.isDepositor && (
                 <>
@@ -327,6 +459,23 @@ export default function PositionsList() {
                         </>
                       )}
                     </span>
+                  </button>
+                  <button 
+                    onClick={() => simulateWithdraw(position)}
+                    disabled={simulatingWithdraw === position.positionId}
+                    className="px-3 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    title="Simulate Withdraw on Tenderly"
+                  >
+                    {simulatingWithdraw === position.positionId ? (
+                      <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    )}
                   </button>
                   <button 
                     onClick={() => openUpdateModal(position.positionId)}
@@ -416,6 +565,26 @@ export default function PositionsList() {
                 className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
               >
                 Cancel
+              </button>
+              <button
+                onClick={() => {
+                  const position = positions.find(p => p.positionId === showUpdateModal);
+                  if (position && newBeneficiaryAddress) simulateUpdateBeneficiary(position, newBeneficiaryAddress);
+                }}
+                disabled={!newBeneficiaryAddress || simulatingUpdateBeneficiary !== null}
+                className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Simulate Update Beneficiary on Tenderly"
+              >
+                {simulatingUpdateBeneficiary ? (
+                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                )}
               </button>
               <button
                 onClick={() => {

@@ -343,10 +343,11 @@ export default function DepositForm() {
             )}
           </button>
         ) : (
-          <button
-            onClick={handleDeposit}
-            disabled={isPending || isConfirming || !amount || !beneficiary || !selectedVault || (selectedVault && selectedVault.chain !== chainId) || isAmountExceeded}
-            className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+          <div className="flex gap-3">
+            <button
+              onClick={handleDeposit}
+              disabled={isPending || isConfirming || !amount || !beneficiary || !selectedVault || (selectedVault && selectedVault.chain !== chainId) || isAmountExceeded}
+              className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
             {isPending ? (
               <span className="flex items-center justify-center space-x-2">
@@ -366,27 +367,24 @@ export default function DepositForm() {
             ) : (
               'Deposit & Start Generating Yields'
             )}
-          </button>
+            </button>
+            <button
+              onClick={handleSimulateDeposit}
+              disabled={isSimulating || !amount || !beneficiary || !selectedVault || isAmountExceeded}
+              className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Simulate on Tenderly"
+            >
+              {isSimulating ? (
+                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 818-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : (
+                '🔍'
+              )}
+            </button>
+          </div>
         )}
-
-        {/* Tenderly Simulation Button */}
-        <button
-          onClick={handleSimulateDeposit}
-          disabled={isSimulating || !amount || !beneficiary || !selectedVault || isAmountExceeded}
-          className="w-full mt-3 bg-purple-600 hover:bg-purple-700 text-white py-3 px-6 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-        >
-          {isSimulating ? (
-            <span className="flex items-center justify-center space-x-2">
-              <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <span>Simulating...</span>
-            </span>
-          ) : (
-            '🔍 Simulate Deposit on Tenderly'
-          )}
-        </button>
 
         {simulationUrl && (
           <div className="mt-2 p-3 bg-purple-50 border border-purple-200 rounded-md">

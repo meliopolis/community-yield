@@ -63,8 +63,7 @@ export const YIELD_REDIRECTOR_ABI = [
   },
   {
     inputs: [
-      { name: '_depositor', type: 'address' },
-      { name: '_vault', type: 'address' }
+      { name: '_positionId', type: 'bytes32' }
     ],
     name: 'claimYield',
     outputs: [],
@@ -73,7 +72,7 @@ export const YIELD_REDIRECTOR_ABI = [
   },
   {
     inputs: [
-      { name: '_vault', type: 'address' },
+      { name: '_positionId', type: 'bytes32' },
       { name: '_assets', type: 'uint256' }
     ],
     name: 'withdraw',
@@ -83,7 +82,7 @@ export const YIELD_REDIRECTOR_ABI = [
   },
   {
     inputs: [
-      { name: '_vault', type: 'address' },
+      { name: '_positionId', type: 'bytes32' },
       { name: '_newBeneficiary', type: 'address' }
     ],
     name: 'updateBeneficiary',
